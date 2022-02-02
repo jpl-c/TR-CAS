@@ -9,26 +9,27 @@ def rotation_lim(theta, Pos_buse, profile = [], max_reflexion_angle = np.pi/6):
 
 
     if len(profile) == 0 :
+        #Setting up a basic profile if none was submitted
         psi_max = 0.7
-        sigma_p = 0.5#2*H*np.tan(psi_max)/5
+        sigma_p = 0.5
         mu_p  = 0
         f = lambda t : 1/(sigma_p* np.sqrt(2*np.pi)) * np.exp(- (t-mu_p)**2/(2*sigma_p**2))
         L_x = np.linspace(-3, 3, 100)
-        profile = [L_x, f(L_x)]
+        profile = np.array([L_x, f(L_x)])
 
 
 
-    ### Determining the intersection point of the primary ray of the spray head and the profile
-    ray0 = np.array([[Pos_buse[0], Pos_buse[1]*np.tan(theta)+Pos_buse[0]], 
+    ### Determining the intersection point of the primary ray of the nozzle and the profile
+    ray0 = np.array([[Pos_buse[0], Pos_buse[1]*np.tan(theta) + Pos_buse[0]], 
             [Pos_buse[1], 0]])
-    xO, yO = intersect.intersection(profile[0], profile[1], ray0[0], ray0[1])
 
-    xO = xO[0]
-    yO = yO[0]
+    x0, y0 = intersect.intersection(profile[0], profile[1], ray0[0], ray0[1])
+    x0 = x0[0]
+    y0 = y0[0]
 
 
     ### Determining the sigma value for the virtual gaussian curve
-    dist_head_curve = np.sqrt((Pos_buse[0] - xO)**2 + (Pos_buse[1] - yO)**2)
+    dist_head_curve = np.sqrt((Pos_buse[0] - x0)**2 + (Pos_buse[1] - y0)**2)
     psi_max = np.pi/10 # Max spray angle of the nozzle
 
     sigma = dist_head_curve*np.tan(psi_max)/5
@@ -39,26 +40,38 @@ def rotation_lim(theta, Pos_buse, profile = [], max_reflexion_angle = np.pi/6):
     y_gauss = G(x_gauss)
     Gauss_curve = np.array([x_gauss, y_gauss])
 
-    slopes = np.diff(profile[1])
+    ### Calculating the slope values of the profile
+    slopes = []
+    for i in range(len(profile[0])-1):
+        xi = profile[0][i]
+        xi1 = profile[0][i+1]
+        yi = profile[1][i]
+        yi1 = profile[1][i+1]
+        if xi-xi1 != 0:
+            slope =  (yi1 - yi)/(xi1 - xi)
+            slopes.append(slope)
+
 
     def effeciency(tan_phi):
-        k = 50
-        tan_phi_max = np.tan(max_reflexion_angle)
-        # tan_phi_max = 1.2
+        k = 4.5
+        # tan_phi_max = np.tan(max_reflexion_angle)
+        tan_phi_max = 1.2
         if tan_phi < tan_phi_max:
             return (np.exp(-k*(tan_phi/tan_phi_max)**2) - np.exp(-k))/(1-np.exp(-k))
         else :
             print("ricochet")
             return 0
+        # return 1
 
-    n_ray = 100
+
+    n_ray = 201
     C_list = np.zeros(shape = (2, n_ray))
     i = 0
 
     ### Building the new curve
     for psi in np.linspace(-psi_max, psi_max, n_ray):
         real_ray = np.array([[Pos_buse[0], Pos_buse[1]*np.tan(psi+theta)+Pos_buse[0]], 
-            [Pos_buse[1], 0]])
+                            [Pos_buse[1], 0]])
         
         virtual_ray = np.array([[0, dist_head_curve*np.tan(psi)], [dist_head_curve, 0]])
         
@@ -67,14 +80,14 @@ def rotation_lim(theta, Pos_buse, profile = [], max_reflexion_angle = np.pi/6):
 
         if xd.size == 0 :
             xd, yd = intersect.intersection(profile[0]*0.999, profile[1]*0.999, real_ray[0], real_ray[1])
-
         else : 
             xd = xd[0]
             yd = yd[0]
 
         ###Looking for the index in slpoes that corresponds to the slope in x = xd
-        min_step_slope = 1
-        i_slope = np.where((profile[0] > xd - min_step_slope) & (profile[0] < xd + min_step_slope))[0][0]
+        min_step_slope = 0.1
+        L_i_slope = np.where((profile[0] > xd - min_step_slope) & (profile[0] < xd + min_step_slope))[0]
+        i_slope = L_i_slope[len(L_i_slope)//2]
         curr_slope = slopes[i_slope]
         tan_phi = np.tan(theta + psi - np.arctan(curr_slope))
         
@@ -101,8 +114,10 @@ def rotation_lim(theta, Pos_buse, profile = [], max_reflexion_angle = np.pi/6):
     ### Replace profile values with the added bump values
     min_step = 0.1
     x_min, x_max = C_list[0][0], C_list[0][-1]
-    i_min = np.where((profile[0] > x_min - min_step) & (profile[0] < x_min + min_step))[0][0]
-    i_max = np.where((profile[0] > x_max - min_step) & (profile[0] < x_max + min_step))[0][0]
+    L_i_min = np.where((profile[0] > x_min - min_step) & (profile[0] < x_min + min_step))[0]
+    L_i_max = np.where((profile[0] > x_max - min_step) & (profile[0] < x_max + min_step))[0]
+    i_min = L_i_min[len(L_i_min)//2]
+    i_max = L_i_max[len(L_i_max)//2]
 
     new_profile_x = np.concatenate(( np.concatenate((profile[0][:i_min], C_list[0])) , profile[0][i_max:]))
     new_profile_y = np.concatenate(( np.concatenate((profile[1][:i_min], C_list[1])) , profile[1][i_max:]))
@@ -112,28 +127,25 @@ def rotation_lim(theta, Pos_buse, profile = [], max_reflexion_angle = np.pi/6):
     return new_profile
 
 H = 5
-theta_max = 0
-pas = 0.001
+theta_max = 0.3
 Pos_buse = np.array([0, H])
 
-f= lambda x : -1/50 * (x-8)**2 + 3
 L_x = np.linspace(-5, 5, 300)
-L_y = f(L_x)
-
-L_y1 = np.zeros_like(L_x)
-substrat = np.array([L_x, L_y1])
-
-
+L_y = np.zeros_like(L_x)
+substrat = np.array([L_x, L_y])
 profile = substrat
+i_max = 10
 
-for i in range(10):
-    theta = theta_max 
-    profile = rotation_lim(theta, Pos_buse, profile, max_reflexion_angle=np.pi/3)
+for i in range(i_max):
+    theta = theta_max#(i-i_max/2)/ i_max * theta_max 
+    profile = rotation_lim(theta, Pos_buse, profile, max_reflexion_angle=np.pi/10)
     if i%2 == 0:
         plt.plot(profile[0], profile[1])
 
 
 plt.scatter(Pos_buse[0], Pos_buse[1])
+
+### plotting the max angle values of nozzle spray as well as center ray
 plt.plot([Pos_buse[0], Pos_buse[0] + np.tan(theta) * Pos_buse[1]],[Pos_buse[1], 0], ":g")
 plt.plot([Pos_buse[0], Pos_buse[0] + np.tan(theta + np.pi/10) * Pos_buse[1]],[Pos_buse[1], 0], ":y")
 plt.plot([Pos_buse[0], Pos_buse[0] + np.tan(theta - np.pi/10) * Pos_buse[1]],[Pos_buse[1], 0], ":y")
