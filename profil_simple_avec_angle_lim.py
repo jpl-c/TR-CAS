@@ -4,12 +4,12 @@ import intersect
 
 
 def rotation_lim(theta, Pos_buse, profile = [], max_reflexion_angle = np.pi/6):
-    """profile is a 2d list. profile[0] is the x step between each height value of the profile. profile[1] is a list 
-    containing the height values of the profile"""
+    """profile is a 2d list. profile[0] is the x values of each point of the profile. profile[1] is a list 
+    containing the height values of the profile for each x"""
 
 
     if len(profile) == 0 :
-        #Setting up a basic profile if none was submitted
+        # Setting up a basic profile if none was submitted
         psi_max = 0.7
         sigma_p = 0.5
         mu_p  = 0
@@ -84,7 +84,7 @@ def rotation_lim(theta, Pos_buse, profile = [], max_reflexion_angle = np.pi/6):
             xd = xd[0]
             yd = yd[0]
 
-        ###Looking for the index in slpoes that corresponds to the slope in x = xd
+        ### Looking for the index in slpoes that corresponds to the slope in x = xd
         min_step_slope = 0.1
         L_i_slope = np.where((profile[0] > xd - min_step_slope) & (profile[0] < xd + min_step_slope))[0]
         i_slope = L_i_slope[len(L_i_slope)//2]
@@ -142,10 +142,10 @@ for i in range(i_max):
     if i%2 == 0:
         plt.plot(profile[0], profile[1])
 
-
+### Plotting the nozzle head position
 plt.scatter(Pos_buse[0], Pos_buse[1])
 
-### plotting the max angle values of nozzle spray as well as center ray
+### Plotting the max angle values of nozzle spray as well as center ray
 plt.plot([Pos_buse[0], Pos_buse[0] + np.tan(theta) * Pos_buse[1]],[Pos_buse[1], 0], ":g")
 plt.plot([Pos_buse[0], Pos_buse[0] + np.tan(theta + np.pi/10) * Pos_buse[1]],[Pos_buse[1], 0], ":y")
 plt.plot([Pos_buse[0], Pos_buse[0] + np.tan(theta - np.pi/10) * Pos_buse[1]],[Pos_buse[1], 0], ":y")
