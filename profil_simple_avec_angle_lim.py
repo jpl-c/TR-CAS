@@ -1,7 +1,5 @@
 import numpy as np
-from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
-from echantillonnage_nuage_pt import echantillonnage
 import intersect
 
 
