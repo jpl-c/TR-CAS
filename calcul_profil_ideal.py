@@ -3,11 +3,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-alpha = -np.pi/6
-# tan_alpha = np.tan(alpha)
 tan_alpha = 1.2
-# print(tan_alpha)
-H = 10
+H = 5
+
+def df_pos_dec (f, t):
+    x = -(t +H/tan_alpha) 
+    dfdx = -(tan_alpha * x + H - f)/((H - f)*tan_alpha - x)
+    return dfdx
 
 def df_pos (f, t):
     x = -t 
@@ -34,8 +36,8 @@ def var_profile_plot(H, top_vals):
     theta_max = np.pi/6
     for i in range(i_max) :
         theta = i/i_max * theta_max
-        ray_pos = [[0, 2*H*np.tan(theta)], [H, 0]]
-        ray_neg = [[0, -2*H*np.tan(theta)], [H, 0]]
+        ray_pos = [[0, H*np.tan(theta)], [H, 0]]
+        ray_neg = [[0, -H*np.tan(theta)], [H, 0]]
         plt.plot(ray_pos[0], ray_pos[1], ":k")
         plt.plot(ray_neg[0], ray_neg[1], ":k")
 
@@ -46,34 +48,41 @@ def var_profile_plot(H, top_vals):
     plt.ylim(bottom = 0)
     plt.axis("equal")
     plt.grid()
+
+# top_vals = np.linspace(1.4, 1.8, 1)
+# var_profile_plot(H, top_vals)
+
+def plot_profil_ideal(H, tan_alpha):
+    x0 = 0
+    max_x = H/tan_alpha
+    t_pos = np.linspace(-max_x, 0, 100)
+    t_neg = np.linspace(0, max_x, 100)
+    sol = odeint(df_pos_dec, x0, t_pos)
+    sol= sol -sol[-1]
+    t = np.concatenate((t_neg-max_x, t_pos+max_x))
+    sol = np.concatenate((sol[::-1], sol))
+    plt.plot(t, sol)
+
+    # i_max = 10
+    # theta_max = np.arctan(tan_alpha)
+    # for i in range(i_max+1) :
+    #     theta = i/i_max * theta_max
+    #     ray_pos = [[0, H*np.tan(theta)], [H, 0]]
+    #     ray_neg = [[0, -H*np.tan(theta)], [H, 0]]
+    #     plt.plot(ray_pos[0], ray_pos[1], ":k")
+    #     plt.plot(ray_neg[0], ray_neg[1], ":k")
+
+    Pos_buse = [0, H]
+    plt.scatter(Pos_buse[0], Pos_buse[1])
+    plt.axis("equal")
+    plt.grid()
     plt.show()
 
-top_vals = np.linspace(H/50, H/5, 5)
-var_profile_plot(H, top_vals)
+
+plot_profil_ideal(H, tan_alpha)
 
 
 
-
-
-
-
-# x0 = 3
-# t_pos = np.linspace(0, 2 * H/tan_alpha, 101)
-# t_neg = np.linspace(0, -2 * H/tan_alpha, 101)
-
-# sol_pos = odeint(df_pos, x0, t_pos)   
-# sol_neg = odeint(df_neg, x0, t_neg)    
-# plt.scatter(Pos_buse[0], Pos_buse[1])
-
-
-
-
-# t = np.concatenate((t_neg[::-1], t_pos))
-# sol = np.concatenate((sol_neg[::-1], sol_pos))
-
-# plt.plot(t_pos, sol_pos[:], 'r', label = "f(x)")
-# plt.plot(t_neg, sol_neg, 'r', label = "f(x)")
-# plt.plot(t, sol, ":b",label = "f(x)")
 
 
 
