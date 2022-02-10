@@ -77,7 +77,7 @@ def rotation_lim(theta, Pos_buse, profile):
 
     def effeciency(tan_phi):
         k = 4.5
-        tan_phi_max = 1.2
+        tan_phi_max = 1.7
         if tan_phi**2 < tan_phi_max**2:
             return (np.exp(-k*(tan_phi/tan_phi_max)**2) - np.exp(-k))/(1-np.exp(-k))
         else :
@@ -146,16 +146,18 @@ def rotation_lim(theta, Pos_buse, profile):
 
 
 def f_substrat(x):
-    if (x)**2/25 > 1:
-        return 5
-    else:
-        return 5#(x)**2/25 + 4
+    # if (x)**2/9 > 5:
+    #     return 5
+    # else:
+    #     return (x)**2/9
+
+    return 0 #+ 0.8*np.sin(2*np.pi*x/10)
 
 def f_buse(x):
-    if (x)**2/25 > 1:
-        return 6#-(x)**2/10 + 6#5
+    if (x)**2/9 > 2:
+        return 0#-(x)**2/10 + 6#5
     else:
-        return 6#-(x)**2/10 + 6       
+        return 0#-(x)**2/9 + 6 #-(x)**2/10 + 6       
 
 def f_theta(x_buse):
     return np.cos(x_buse)
@@ -174,7 +176,7 @@ def make_substrat():
 
 
 
-H = 15
+H = 20
 theta_max = 0
 Pos_buse = np.array([0, H])
 substrat = make_substrat()
@@ -182,13 +184,13 @@ profile = substrat
 i_max = 11
 
 profiles = []
-n_passes = 10
+n_passes = 4
 L_Pos_buse_pass = []
 
 for n in range(n_passes):
     L_Pos_buse = [[],[]]
-    f_x =  lambda i : (-5 + 10*i/(i_max-1))*(-1)**n
-    f_H = lambda x_buse : H + f_buse(x_buse) + n*0.5
+    f_x =  lambda i : (-10 + 20*i/(i_max-1))*(-1)**n
+    f_H = lambda x_buse : H  + f_buse(x_buse) + n*0.3
     f_theta = lambda i : theta_max * np.cos(np.pi * i/(i_max-1))*(-1)**n
 
     for i in range(i_max):
@@ -199,7 +201,7 @@ for n in range(n_passes):
         L_Pos_buse[1].append(Pos_buse[1])
 
         profile = rotation_lim(theta, Pos_buse, profile)
-    plt.plot([Pos_buse[0], Pos_buse[0] + np.tan(theta) * Pos_buse[1]],[Pos_buse[1], 0], ":g")
+    # plt.plot([Pos_buse[0], Pos_buse[0] + np.tan(theta) * Pos_buse[1]],[Pos_buse[1], 0], ":g")
     print(f"Pass {n+1} done")
     new_profile = np.array([profile[0], profile[1]])
     profiles.append(new_profile)
