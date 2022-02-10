@@ -145,17 +145,24 @@ def rotation_lim(theta, Pos_buse, profile):
     return new_profile
 
 
+def f_substrat(x):
+    if (x)**2/25 > 1:
+        return 5
+    else:
+        return 5#(x)**2/25 + 4
 
+def f_buse(x):
+    if (x)**2/25 > 1:
+        return 6#-(x)**2/10 + 6#5
+    else:
+        return 6#-(x)**2/10 + 6       
+
+def f_theta(x_buse):
+    return np.cos(x_buse)
 
 def make_substrat():
     L_x = np.linspace(-40, 40, 1001)
     L_y = np.zeros_like(L_x)
-
-    def f_substrat(x):
-        if (x)**2/9 > 4:
-            return 5
-        else:
-            return (x)**2/9 + 1
             
     for i, x in enumerate(L_x):
         L_y[i] = f_substrat(x)
@@ -172,37 +179,60 @@ theta_max = 0
 Pos_buse = np.array([0, H])
 substrat = make_substrat()
 profile = substrat
-i_max = 10
+i_max = 11
 
 profiles = []
-n_passes = 5
+n_passes = 10
+L_Pos_buse_pass = []
 
 for n in range(n_passes):
-
+    L_Pos_buse = [[],[]]
     f_x =  lambda i : (-5 + 10*i/(i_max-1))*(-1)**n
-    f_y = lambda n : H + n*0.7
-    H = f_y(n)
+    f_H = lambda x_buse : H + f_buse(x_buse) + n*0.5
+    f_theta = lambda i : theta_max * np.cos(np.pi * i/(i_max-1))*(-1)**n
+
     for i in range(i_max):
-        theta = theta_max #-2*theta_max *(i-i_max/2)/ i_max 
-        Pos_buse = [f_x(i), H]
+        x_buse = f_x(i)
+        theta = f_theta(i)
+        Pos_buse = [x_buse, f_H(x_buse)]
+        L_Pos_buse[0].append(Pos_buse[0])
+        L_Pos_buse[1].append(Pos_buse[1])
 
         profile = rotation_lim(theta, Pos_buse, profile)
-        print(f"profile {i+1} done !")
-
+    plt.plot([Pos_buse[0], Pos_buse[0] + np.tan(theta) * Pos_buse[1]],[Pos_buse[1], 0], ":g")
+    print(f"Pass {n+1} done")
     new_profile = np.array([profile[0], profile[1]])
     profiles.append(new_profile)
+    L_Pos_buse_pass.append(L_Pos_buse)
+
+# for n in range(n_passes):
+
+#     f_x =  lambda i : (-5 + 10*i/(i_max-1))*(-1)**n
+#     f_y = lambda n : H + n*0.7
+#     H = f_y(n)
+#     for i in range(i_max):
+#         theta = theta_max #-2*theta_max *(i-i_max/2)/ i_max 
+#         Pos_buse = [f_x(i), H]
+
+#         profile = rotation_lim(theta, Pos_buse, profile)
+#         print(f"profile {i+1} done !")
+
+#     new_profile = np.array([profile[0], profile[1]])
+#     profiles.append(new_profile)
 
 for i, profile in enumerate(profiles):
     plt.plot(profile[0], profile[1], label = f"pass number{i+1}")
 
+for i, L_Pos_buse in enumerate(L_Pos_buse_pass):
+    plt.scatter(L_Pos_buse[0], L_Pos_buse[1], s = 1)
 
 ### Plotting the nozzle head position
 plt.scatter(Pos_buse[0], Pos_buse[1])
 
 ### Plotting the max angle values of nozzle spray as well as center ray
-plt.plot([Pos_buse[0], Pos_buse[0] + np.tan(theta_max) * Pos_buse[1]],[Pos_buse[1], 0], ":g")
-plt.plot([Pos_buse[0], Pos_buse[0] + np.tan(theta_max + np.pi/10) * Pos_buse[1]],[Pos_buse[1], 0], ":y")
-plt.plot([Pos_buse[0], Pos_buse[0] + np.tan(theta_max - np.pi/10) * Pos_buse[1]],[Pos_buse[1], 0], ":y")
+# plt.plot([Pos_buse[0], Pos_buse[0] + np.tan(theta_max) * Pos_buse[1]],[Pos_buse[1], 0], ":g")
+# plt.plot([Pos_buse[0], Pos_buse[0] + np.tan(theta_max + np.pi/10) * Pos_buse[1]],[Pos_buse[1], 0], ":y")
+# plt.plot([Pos_buse[0], Pos_buse[0] + np.tan(theta_max - np.pi/10) * Pos_buse[1]],[Pos_buse[1], 0], ":y")
 
 ### Plotting substrate surface
 plt.plot(substrat[0], substrat[1], "r")
